@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="src/styles.css">
+<link rel="stylesheet" href="src/energy.css">
+<link rel="stylesheet" href="src/styles-2.css">
 </head>
 <body>
 <div id="pkGate" class="pkgate"><div class="pkbox">
@@ -2423,7 +2425,7 @@ function pkColInit(){
     if(!root._pkt){root._pkt=1;const clr=t=>{t.classList.remove("on");["--rx","--ry","--gx"].forEach(v=>t.style.removeProperty(v))};
       root.addEventListener("pointermove",e=>{if(e.pointerType==="touch")return;const t=e.target.closest&&e.target.closest(".pkp-img");if(!t)return;t.classList.add("on");const r=t.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;t.style.setProperty("--ry",((x-.5)*16)+"deg");t.style.setProperty("--rx",((.5-y)*12)+"deg");t.style.setProperty("--gx",(x*100)+"%")});
       root.addEventListener("pointerout",e=>{const t=e.target.closest&&e.target.closest(".pkp-img");if(t&&!t.contains(e.relatedTarget))clr(t)})}
-    if(!root.getElementById("pkcolcss")){const st=document.createElement("style");st.id="pkcolcss";st.textContent=PKP_CSS+PKCOL_CSS+pkEnCss();root.appendChild(st)}
+    if(!root.getElementById("pkcolcss")){const st=document.createElement("style");st.id="pkcolcss";st.textContent=PKP_CSS+PKCOL_CSS;root.appendChild(st);root.appendChild(pkEnCss())}
     if(!side._pkw){side._pkw=true;new MutationObserver(()=>pkColEnhance(side,page)).observe(side,{childList:true})}
     pkColEnhance(side,page);
   });
@@ -2435,7 +2437,8 @@ function pkRar(r){if(!r)return "—";const l=String(r).toLowerCase();let sy="",g
   if(/hyper|secret/.test(l)){sy="★★★";gold=true}else if(/special illustration/.test(l)){sy="★★";gold=true}else if(/illustration/.test(l)){sy="★";gold=true}else if(/ultra|double/.test(l)){sy="★★";gold=true}else if(/holo|rare/.test(l)){sy="★"}else if(/uncommon/.test(l)){sy="◆"}else if(/common/.test(l)){sy="●"}
   return (sy?`<span style="color:${gold?"#F2C230":"var(--muted)"};letter-spacing:1px;margin-right:5px" aria-hidden="true">${sy}</span>`:"")+esc(r)}
 function pkEn(c){if(kindOf(c)!=="pokemon")return esc(kindOf(c)==="trainer"?"Trainer":kindOf(c)==="energy"?"Energy":"—");const t=dpType(c);return `<span style="display:inline-flex;align-items:center;gap:6px">${en(t)}${esc(t)}</span>`}
-function pkEnCss(){let o="";for(const sh of document.styleSheets){try{for(const r of sh.cssRules)if(r.selectorText&&/^\.en([.:\s\[]|$)/.test(r.selectorText))o+=r.cssText}catch(e){}}return o}
+// energy icon rules for shadow pages: linked, because cssRules of a file:// stylesheet cannot be read
+function pkEnCss(){const l=document.createElement("link");l.rel="stylesheet";l.href="src/energy.css";return l}
 function pkWhere(c,curTxt,qty){const all=S.cards.filter(x=>cardKey(x)===cardKey(c)&&x.id!==c.id);
   const row=x=>`<button type="button" class="pkel" data-gi="${esc(x.id)}" data-gt="${x.locType==="binder"||!x.locType?"binder":x.locType}" data-gb="${x.binder||""}" data-gp="${x.page||1}" data-gd="${esc(x.deck||"")}"><span style="color:inherit;font-size:.9rem;font-weight:600">${(+x.qty||1)>1?"×"+(+x.qty)+" · ":""}${esc(locLabel(x))} →</span></button>`;
   return `<div class="pkp-wl">Where</div><div class="pkel-l" style="margin-top:0"><div class="pkelc"><span style="color:inherit;font-size:.9rem;font-weight:600">${qty>1?"×"+qty+" · ":""}${esc(curTxt)} · this card</span></div>${all.map(row).join("")}${all.length?"":`<div class="hint">This is the only copy in your catalogue.</div>`}</div>`}
