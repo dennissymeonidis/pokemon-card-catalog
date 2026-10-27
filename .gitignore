@@ -1,0 +1,9 @@
+collection.xlsx
+~$*.xlsx
+backups/
+exports/
+artwork/
+photos/
+sets.json
+_w.tmp
+Claude outputs/
