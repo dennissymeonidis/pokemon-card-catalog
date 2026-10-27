@@ -32,7 +32,11 @@ Tools overhaul (health check, utilities); folder menu moved.
 
 ## 2. Structure
 
-One `<style>` block (lines ~11–1726: tokens `--bg --sheet --ink --muted --line --pocket --pocket-edge --accent --accent-ink --brand --danger --ok --warn`,
+**Split stage 1 (2026-10-28, branch `split-assets`):** the `<style>` block now lives in `src/styles.css` + `src/energy.css` + `src/styles-2.css`
+(linked in that order; `energy.css` = the three `.en` rules, linked into shadow panels by `pkEnCss`), the sets array in `src/data/sets.js`
+(`window.PK_SETS`) and `SC_HOLDER`'s data URI in `src/data/holder.js` (`window.PK_HOLDER`). HTML is ~0.9 MB. Line numbers below are pre-split.
+
+Former `<style>` block (lines ~11–1726: tokens `--bg --sheet --ink --muted --line --pocket --pocket-edge --accent --accent-ink --brand --danger --ok --warn`,
 light/dark/auto, all main-DOM styling) and SheetJS loaded from cdn.sheetjs.com. Four inline scripts, all classic (no modules):
 
 1. **PKL** (~2112–2581), `var PKL=(function(){...})()`. Folder access, xlsx storage, OCR, TCGdex.
@@ -79,8 +83,8 @@ TCGdex: `https://api.tcgdex.net/v2/en` (`/cards/{id}`, `/cards?name=`, `/sets`);
 - Pokédex placeholders use one TCGdex card per species (cached); wish items from the Pokédex pick a non-promo set card (`/p$/` set ids excluded), which may not be the printing you want.
 - Wish list: strings not in the Greek dictionary (unverified); mark-as-owned undo is the page's own toast, not the sidebar Undo; a Firebase backend path exists in the code with no wish hook (unverified whether used).
 - Nested `<button>` breaks HTML parsing (priority pills are buttons, so wish cards are `div role=button`). Dialogs and `querySelector` inside shadow pages need the shadow root.
-- Editing rules: change both `COLS` and `MAP`/`toRow`/`fromRow` together; keep functions global and unrenamed; do not touch the embedded sprite blobs or the `P.sets` array;
-  whole-file reprints are costly (file is 1.2 MB), so use targeted replaces that assert one match.
+- Editing rules: change both `COLS` and `MAP`/`toRow`/`fromRow` together; keep functions global and unrenamed; do not touch the sprite blobs (in `src/*.css`) or the sets array (`src/data/sets.js`);
+  whole-file reprints are costly (HTML is ~0.9 MB), so use targeted replaces that assert one match.
 - Deploy method used so far: edit copy, test in headless Chromium against sample data, back up as `before <name>.html`, write with a NEW file name, verify md5 on disk.
   Re-using one staged filename once produced a stale copy.
 - CLAUDE.md is out of date: it lists 3 scripts and the name `Card catalog.html`.
@@ -92,4 +96,4 @@ TCGdex: `https://api.tcgdex.net/v2/en` (`/cards/{id}`, `/cards?name=`, `/sets`);
 - Neighbours strip: currently 5 tiles including the current card; the alternative is 5 neighbours excluding it.
 - Delete key in a binder performing a real delete; sortable Card ID column; retreat-cost column; a History sheet in the xlsx for card trails.
 - Add-card redesign (`add-card-prototype.html` exists; waits for your go-ahead); `card-catalog-improvement-suggestions.md` (waits for you to pick items).
-- Splitting the single HTML file into several files (stated goal; CLAUDE.md rules require classic script tags).
+- Splitting the single HTML file into several files (stated goal; CLAUDE.md rules require classic script tags). Stage 1 (CSS, sets, holder) done 2026-10-28.
