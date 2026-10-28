@@ -1,12 +1,12 @@
 # Card catalog: project notes (2026-10-28)
 
-Describes `Card catalog v2.html` (md5 46b1241f…, 1.24 MB, ~10,300 lines) as deployed on 2026-10-27.
-Supersedes the 2026-10-21 baseline in CLAUDE.md and CHANGELOG.md, which are now out of date (not edited).
-Single-file local app, opened over file:// in desktop Chrome/Edge. No server, no AI at runtime.
+Describes the app as of v1.3: `Card catalog v2.html` (markup only) plus its CSS and JavaScript in `src/`.
+Local app, opened over file:// in desktop Chrome/Edge. No server, no AI at runtime.
+§1 is the feature history up to the v1.0 baseline (the single 1.24 MB file deployed on 2026-10-27, md5 46b1241f…).
 
 ## 1. What changed since 2026-10-21
 
-**What "v2" means.** On 2026-10-21 the baseline (CLAUDE.md calls it `Card catalog.html`) was rebuilt as `Card catalog v2.html`
+**What "v2" means.** On 2026-10-21 the baseline (then named `Card catalog.html`) was rebuilt as `Card catalog v2.html`
 (exact rename time unverified; first backup 20:01). v2 = a sidebar shell plus full pages for Home, Binders, Decks, Showcase,
 Tools and later Wish list and Living Pokédex, each built to match a prototype in `Claude outputs/*-prototype.html`.
 Most new pages are shadow-DOM hosts. The card page is its own screen with an address (`#card/<id>`).
@@ -32,45 +32,41 @@ Tools overhaul (health check, utilities); folder menu moved.
 
 ## 2. Structure
 
-Since the split (stages 1–3, 2026-10-28; see §6) `Card catalog v2.html` is markup only (~37 KB): SheetJS from cdn.sheetjs.com in the head,
-then these files, all classic and sharing one global scope, in load order (sizes in bytes as committed):
+`Card catalog v2.html` is markup only (~37 KB): SheetJS from cdn.sheetjs.com in the head, then these files, all classic and sharing
+one global scope, in load order (sizes in bytes as committed in v1.3):
 
 | File | Size | Holds |
 |---|---|---|
-| `src/styles.css`, `src/energy.css`, `src/styles-2.css` | 105,192 / 115,793 / 96,457 | Former `<style>` block, linked in this order; `energy.css` = the three `.en` rules, linked into shadow panels by `pkEnCss` |
+| `src/styles.css`, `src/energy.css`, `src/styles-2.css` | 105,192 / 115,793 / 96,457 | Main-DOM CSS, linked in this order; `energy.css` = the three `.en` rules, linked into shadow panels by `pkEnCss` |
 | `src/data/sets.js` | 14,035 | `window.PK_SETS` (built-in set list; `P.sets` starts as it) |
 | `src/data/holder.js` | 14,531 | `window.PK_HOLDER` (`SC_HOLDER`'s data URI) |
-| `src/runtime.js` | 34,782 | Script 1, PKL |
-| `src/app-cards.js` | 104,546 | Script 2 lines 1–969: storage, helpers, Cards list render, collection value, Stats, Living Pokédex, deck basics |
-| `src/app-decks-shell.js` | 97,562 | Script 2 lines 970–1813: v2 decks (engine, builder, import, wiring), app shell (`buildShell`, `show`), side panels, set symbols, Tools |
-| `src/app-cardpage-binders.js` | 148,385 | Script 2 lines 1814–3151: card page (`cp*`), Binders page (`bk*`, `BKCSS`), plus `DPCSS` |
-| `src/app-deckspage-editor.js` | 110,571 | Script 2 lines 3152–4176: Decks page (`dp*`), `v2Home`, sidebar IIFE, `renderDex`/`renderBinder`/`renderReview`, scanning, editor |
-| `src/app-lists-views.js` | 90,822 | Script 2 lines 4177–5136: editable lists, editor panel, energy types/sets, card sheet, add/export, wiring, columns, formats, views/selection |
-| `src/app-showcase-home.js` | 126,711 | Script 2 lines 5137–6498: undo/backup/import, binder imports, reorder, drag, multi-select, **boot** (`buildShell();render();initStore();`), Showcase, Home, `ptKpis` |
-| `src/wishlist.js` | 50,659 | Script 3, wish list |
-| `src/i18n.js` | 95,920 | Script 4, Greek layer |
+| `src/runtime.js` | 34,782 | PKL: folder access, xlsx storage, OCR, TCGdex |
+| `src/app-cards.js` | 104,546 | Storage, helpers, Cards list render, collection value, Stats, Living Pokédex, deck basics |
+| `src/app-decks-shell.js` | 97,562 | Decks (engine, builder, import, wiring), app shell (`buildShell`, `show`), side panels, set symbols, Tools |
+| `src/app-cardpage-binders.js` | 148,385 | Card page (`cp*`), Binders page (`bk*`, `BKCSS`), plus `DPCSS` |
+| `src/app-deckspage-editor.js` | 110,571 | Decks page (`dp*`), `v2Home`, sidebar IIFE, `renderDex`/`renderBinder`/`renderReview`, scanning, editor |
+| `src/app-lists-views.js` | 90,822 | Editable lists, editor panel, energy types/sets, card sheet, add/export, wiring, columns, formats, views/selection |
+| `src/app-showcase-home.js` | 126,711 | Undo/backup/import, binder imports, reorder, drag, multi-select, **boot** (`buildShell();render();initStore();`), Showcase, Home, `ptKpis` |
+| `src/wishlist.js` | 50,659 | Wish list page |
+| `src/i18n.js` | 95,920 | Greek UI layer |
 
-Each `src/*.js` is the old inline script body, byte for byte; the six `src/app-*.js` joined in order are the old script 2 (`src/app.js`), and
-their line ranges above are positions in that file. Line numbers below are pre-split positions in the single HTML file.
+CSS tokens: `--bg --sheet --ink --muted --line --pocket --pocket-edge --accent --accent-ink --brand --danger --ok --warn`, light/dark/auto.
 
-Former `<style>` block (lines ~11–1726: tokens `--bg --sheet --ink --muted --line --pocket --pocket-edge --accent --accent-ink --brand --danger --ok --warn`,
-light/dark/auto, all main-DOM styling). The four scripts:
-
-1. **PKL**, now `src/runtime.js` (~2112–2581), `var PKL=(function(){...})()`. Folder access, xlsx storage, OCR, TCGdex.
-   Inside it (NOT global): `COLS`, `MAP`, `toRow`, `fromRow`, `workbook`, `load`, `save`, `schedule`, `useDir`, `folderRaw`.
-   Exposed on `PKL`: `enrich, findFor, details, priceOf, artwork, cardById, setCards, setRow, tget, updateDetails, rowEnrich, identifyAll, P`.
-   Also the TCGdex matchers (`match`, `sim`), `refreshPrices`, `fetchArt`, `updateSets`.
-2. **Main app**, now the six `src/app-*.js` files (~2582–9079, ~6,500 lines). Section comments mark: storage/helpers/render (Cards list), collection value, Stats (value, analytics),
-   decks engine and builder, shell (`SCREENS`, `buildShell`, `show`, `showSub`), Tools (`healthChecks`, `toolsRefresh`), card page (`cp*`),
-   Binders page (`bk*`, shadow host `#bkHost`), Decks page (`dk*`, `dp*`, `#dkHost`), Showcase (`sc*`, `scp*`, `#scHost`), Home (`v2Home`, `renderHome`),
-   editor (`openEditor`, `ed*`), Living Pokédex (`ldx*`), sidebar IIFE (`sbRefresh`, `sbActive`, `sbUndo`).
+1. **PKL** (`src/runtime.js`), `var PKL=(function(){...})()`. Internal only: `COLS`, `MAP`, `toRow`, `fromRow`, `workbook`, `load`, `save`,
+   `schedule`, `useDir`, the TCGdex matchers (`match`, `sim`), `refreshPrices`, `fetchArt`, `updateSets`.
+   Exposed on `PKL`: `blob, folderRaw, updateDetails, enrich, rowEnrich, identifyAll, identifyOne, reviewExtra, priceHtml, findFor, details,
+   priceOf, artwork, P, setCards, setRow, tget, cardById, realImg`. Also global: `window.pkProgress`.
+2. **Main app** (the six `src/app-*.js` files, 6,498 lines in total). Section comments mark: storage/helpers/render (Cards list), collection value,
+   Stats (value, analytics), decks engine and builder, shell (`SCREENS`, `buildShell`, `show`, `showSub`), Tools (`healthChecks`, `toolsRefresh`),
+   card page (`cp*`), Binders page (`bk*`, shadow host `#bkHost`), Decks page (`dk*`, `dp*`, `#dkHost`), Showcase (`sc*`, `scp*`, `#scHost`),
+   Home (`v2Home`, `renderHome`, `hm*`, `#hmHost`), editor (`openEditor`, `ed*`), Living Pokédex (`ldx*`), sidebar IIFE (`sbRefresh`, `sbActive`, `sbUndo`).
    Key globals: `S` (state: cards, binders, activity, decksMeta, scMeta, lists, formats, wish, screen, store, raw, cp), `UNDO`/`TX`
    (`txBegin`, `txEnd`, `undoLast`, `logAct`), `makeStore` (S.store.add/set/del/bset), `phistOf`, `unitVal`, `eur`, `esc`, `plural`, `cardKey`,
-   `locLabel`, `dexOf`, `binderNums`, `binderName`, `deckNames`, `scCaseNames`, `askConfirm`, `askBulk`, `pkProgress`, `cpToast`, `richSelect`,
-   `VARIANTS`, `CONDITIONS`, `ICO`. Second, unrelated `COLS` (Cards-list column defs, ~line 3062) exists in this script.
-3. **Wish list**, now `src/wishlist.js` (~9080–9521): `WLCSS`, `WLP` (priority map), `WL` (view state), `WLU` (undo stack), `wlInit`, `wlRender`, `wlSide`, `wlAddPicked`,
+   `locLabel`, `dexOf`, `binderNums`, `binderName`, `deckNames`, `scCaseNames`, `askConfirm`, `askBulk`, `cpToast`, `richSelect`,
+   `VARIANTS`, `CONDITIONS`, `ICO`. The Cards-list column definitions are a second, unrelated `COLS` (in `app-cards.js`).
+3. **Wish list** (`src/wishlist.js`): `WLCSS`, `WLP` (priority map), `WL` (view state), `WLU` (undo stack), `wlInit`, `wlRender`, `wlSide`, `wlAddPicked`,
    `wlOwnGo`, `wlImport`/`wlParse`, `wlAddMissing`, `wlExport`, `wlRefreshPrices`, `wlOnShow`; shadow host `#wlHost`.
-4. **Greek layer** `PKI18N`, now `src/i18n.js` (~9522–10332): dictionary `D`, regex rules `R`, `tr`, `set`; MutationObserver translates the DOM; EN/ΕΛ button `#pkLang`.
+4. **Greek layer** `PKI18N` (`src/i18n.js`): dictionary `D`, regex rules `R`, `tr`, `set`; MutationObserver translates the DOM; EN/ΕΛ button `#pkLang`.
 
 Screens: home, scan, binders, decks, showcase, collection (Cards), wishlist, stats, tools, card, pokedex (pokedex counts as Stats in the nav).
 
@@ -78,8 +74,9 @@ Screens: home, scan, binders, decks, showcase, collection (Cards), wishlist, sta
 
 Folder (git-ignored, never delete): `collection.xlsx` (1,193 card rows on 10-27), `artwork/<setid - name>/` (28 sets), `photos/` (hashed jpgs),
 `backups/` (dated xlsx plus ~150 HTML build backups, ~157 MB), `exports/` (backup json, collection report, working xlsx copies),
-`sets.json` (set list cache), `ui/` (showcase holder images), `Claude outputs/` (prototypes; its `Card catalog v2.html` is an old 10-22 copy, ignore).
-Other: `.git` (one commit, baseline), `CLAUDE.md`, `CHANGELOG.md` (v1.0 only), empty `_w.tmp`, `~$*.xlsx` lock files are git-ignored.
+`sets.json` (set list cache), `Claude outputs/` (prototypes; its `Card catalog v2.html` is an old 10-22 copy, ignore).
+Excel lock files `~$*.xlsx` and `_w.tmp` are git-ignored too. In git: the HTML, `src/`, `ui/` (showcase holder images), `CLAUDE.md`,
+`CHANGELOG.md`, `PROJECT-NOTES.md`, `.gitignore`; releases are tags v1.0–v1.3.
 
 `collection.xlsx` sheets: **Cards**, **Binders** (binder, name, json), **Activity** (time, label; newest 200), **Meta** (hidden; key,json rows:
 decks, formats, lists, showcases, **wishlist** — verified present on 10-27).
@@ -101,10 +98,11 @@ TCGdex: `https://api.tcgdex.net/v2/en` (`/cards/{id}`, `/cards?name=`, `/sets`);
 - Wish list: strings not in the Greek dictionary (unverified); mark-as-owned undo is the page's own toast, not the sidebar Undo; a Firebase backend path exists in the code with no wish hook (unverified whether used).
 - Nested `<button>` breaks HTML parsing (priority pills are buttons, so wish cards are `div role=button`). Dialogs and `querySelector` inside shadow pages need the shadow root.
 - Editing rules: change both `COLS` and `MAP`/`toRow`/`fromRow` together; keep functions global and unrenamed; do not touch the sprite blobs (in `src/*.css`) or the sets array (`src/data/sets.js`);
-  whole-file reprints are costly (HTML is ~0.9 MB), so use targeted replaces that assert one match.
-- Deploy method used so far: edit copy, test in headless Chromium against sample data, back up as `before <name>.html`, write with a NEW file name, verify md5 on disk.
-  Re-using one staged filename once produced a stale copy.
-- CLAUDE.md is out of date: it lists 3 scripts and the name `Card catalog.html`.
+  whole-file reprints are costly (the largest file, `src/app-cardpage-binders.js`, is ~145 KB), so use targeted replaces that assert one match.
+- Load order matters: code that runs at load may only use names from its own file or earlier files (function hoisting does not cross files).
+  The boot must stay in `src/app-showcase-home.js`, the last app file (see §6).
+- Before git (up to v1.0) changes were deployed by editing a copy, testing in headless Chromium, backing up as `before <name>.html` and writing
+  under a new file name. Since v1.0 changes go through named git branches, a browser test and a tag.
 
 ## 5. Ideas discussed, not built
 
@@ -113,17 +111,18 @@ TCGdex: `https://api.tcgdex.net/v2/en` (`/cards/{id}`, `/cards?name=`, `/sets`);
 - Neighbours strip: currently 5 tiles including the current card; the alternative is 5 neighbours excluding it.
 - Delete key in a binder performing a real delete; sortable Card ID column; retreat-cost column; a History sheet in the xlsx for card trails.
 - Add-card redesign (`add-card-prototype.html` exists; waits for your go-ahead); `card-catalog-improvement-suggestions.md` (waits for you to pick items).
-- Splitting the single HTML file into several files (stated goal; CLAUDE.md rules require classic script tags). Stages 1–2 done 2026-10-28; see §6.
+## 6. File split (done)
 
-## 6. File-split plan
+The single HTML file was split into the files in §2 in three stages, all done and tagged on 2026-10-28. Each stage moved text only.
 
 - **Stage 1 (done, v1.1):** `<style>` block → `src/styles.css` + `src/energy.css` + `src/styles-2.css`; sets array → `src/data/sets.js`;
   showcase holder → `src/data/holder.js`. Plus the `pkEnCss` fix (link `energy.css` into shadow panels). Reassembly check: byte-identical to v1.0.
-- **Stage 2 (done, v1.2):** the four inline scripts → `src/runtime.js`, `src/app.js`, `src/wishlist.js`, `src/i18n.js`, same load order,
-  text moved only. Check: the four files equal the four original script bodies byte for byte; browser test passed.
-- **Stage 3 (done, v1.3, 2026-10-28; browser test passed):** `src/app.js` → six consecutive files, cut only at top-level section
+- **Stage 2 (done, v1.2):** the four inline scripts → `src/runtime.js`, `src/app.js` (split again in stage 3), `src/wishlist.js`, `src/i18n.js`,
+  same load order, text moved only. Check: the four files equal the four original script bodies byte for byte; browser test passed.
+- **Stage 3 (done, v1.3; browser test passed):** `src/app.js` → six consecutive files, cut only at top-level section
   comments: `app-cards.js` (1–969), `app-decks-shell.js` (970–1813), `app-cardpage-binders.js` (1814–3151), `app-deckspage-editor.js` (3152–4176),
-  `app-lists-views.js` (4177–5136), `app-showcase-home.js` (5137–6498). Checks: joined in order they equal `main:src/app.js` byte for byte;
+  `app-lists-views.js` (4177–5136), `app-showcase-home.js` (5137–6498) (line ranges in the v1.2 `src/app.js`). Checks: joined in order they equal
+  the v1.2 `src/app.js` byte for byte;
   no load-time statement calls a function in a later file.
   **Constraint for future cuts:** the boot (`buildShell();render();initStore();`) must stay in the same file as Showcase and Home and in the
   last app file. Reasons: `render()` calls `renderShowcase()` unguarded and relies on hoisting; `ptKpis` runs at load when the saved screen is
