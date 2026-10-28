@@ -6,6 +6,18 @@ Versions are git tags. A version is tagged only after it has been tested in the 
 
 
 
+\## v1.2 - 2026-10-28 (split stage 2)
+
+\- Scripts moved out of "Card catalog v2.html" to src/runtime.js, src/app.js, src/wishlist.js and src/i18n.js.
+
+\- Load order unchanged.
+
+\- No logic changes.
+
+\- Lossless check passed: the four files match the original script bodies byte for byte.
+
+
+
 \## v1.1 - 2026-10-28 (split stage 1)
 
 \- Moved the <style> block, the sets array and the showcase holder image out of

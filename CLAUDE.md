@@ -11,20 +11,33 @@ collection.xlsx, artwork/, photos/, backups/, exports/, sets.json, Claude output
 live in this folder but are git-ignored. Never read their contents, commit, delete, move,
 rename or modify them. The app writes collection.xlsx itself.
 
-## Structure (search by name; line numbers go stale)
-- src/styles.css, src/energy.css, src/styles-2.css: the former <style> block, linked in this
-  order (cascade order matters). styles.css holds the rarity sprite, energy.css the energy
-  sprite; do not read or print the base64.
-- src/energy.css holds only the .en rules. pkEnCss() links it into the Binders/Decks/Showcase
-  shadow panels, because cssRules of a file:// stylesheet cannot be read. Keep .en rules there.
-- src/data/sets.js: window.PK_SETS, built-in set list (P.sets starts as it; sets.json replaces it)
-- src/data/holder.js: window.PK_HOLDER, showcase holder data URI (SC_HOLDER in script 2)
-Main HTML file, in order: SheetJS, the three CSS links, sets.js and holder.js, then:
-- Script 1: PKL local runtime (folder storage, xlsx, OCR, TCGdex) with const P
-- Script 2: main app, ~56% of the file (Home, Scan, Binders, Decks, Showcase, Cards,
-  Stats, Tools, card page, editor, Living Pokédex, sidebar)
-- Script 3: wish list (WL*, wl*)
-- Script 4: PKI18N Greek UI layer (dictionary D, regex rules R)
+## File map (load order; search by name, line numbers go stale)
+All classic scripts sharing one global scope; later files use names from earlier ones.
+- `Card catalog v2.html`: markup only. Head: SheetJS (CDN), fonts, the three CSS links.
+  Body: gate `#pkGate`, dialogs (`binderDlg`, `bulkDlg`, `confirmDlg`, `editor`), then the
+  script tags below. Shadow hosts (`#bkHost` `#dkHost` `#scHost` `#wlHost`) are made by JS.
+- `src/styles.css`, `src/energy.css`, `src/styles-2.css`: main-DOM CSS, linked in this order
+  (cascade order matters). Tokens (`--bg --ink --accent`…) and rarity sprite `.rs` in
+  styles.css, energy sprite `.en.sp` in energy.css. Never read or print the base64.
+- `src/energy.css`: only the `.en` rules. `pkEnCss()` links it into the Binders/Decks/Showcase
+  shadow panels (cssRules of a file:// stylesheet cannot be read). Keep `.en` rules there.
+- `src/data/sets.js`: `window.PK_SETS`, built-in set list (`[id,name,code,official,total,
+  series,date]`). `P.sets` starts as it; `sets.json` replaces it when the folder loads.
+- `src/data/holder.js`: `window.PK_HOLDER`, showcase holder data URI (`SC_HOLDER` in app.js).
+- `src/runtime.js`: `var PKL=(function(){…})()`: folder access, xlsx load/save, OCR, TCGdex.
+  Private: `COLS`, `MAP`, `toRow`, `fromRow`, `load`, `save`, `useDir`, `folderRaw`.
+  On `PKL`: `P`, `enrich`, `findFor`, `details`, `priceOf`, `artwork`, `cardById`, `setCards`,
+  `setRow`, `updateDetails`, `identifyAll`; also `refreshPrices`, `fetchArt`, `updateSets`.
+- `src/app.js` (~680 KB): main app. State `S`; undo `UNDO`/`TX` (`txBegin` `txEnd` `undoLast`
+  `logAct`); `makeStore`; shell `SCREENS` `buildShell` `show` `showSub`; Cards list (its own
+  `COLS`), Stats, Tools (`healthChecks`), card page `cp*`, editor `openEditor`/`ed*`, Binders
+  `bk*`, Decks `dk*`/`dp*`, Showcase `sc*`/`scp*`, Home `v2Home`/`renderHome`, Living Pokédex
+  `ldx*`, sidebar `sbRefresh`/`sbUndo`, side panels `pkColInit`/`pkEnCss`. Helpers: `esc`
+  `eur` `plural` `cardKey` `locLabel` `askConfirm` `cpToast` `richSelect`.
+- `src/wishlist.js`: wish list page: `WLCSS` `WLP` `WL` `WLU` `wlInit` `wlRender` `wlSide`
+  `wlImport`/`wlParse` `wlAddMissing` `wlExport` `wlRefreshPrices` `wlOnShow`.
+- `src/i18n.js`: `window.PKI18N` Greek layer: dictionary `D`, regex rules `R`, `tr`, `set`,
+  MutationObserver, EN/ΕΛ button `#pkLang`. Missing Greek strings go in D or R.
 
 ## Working rules
 - Small, targeted edits. Never reprint a whole file. Search first, read only what is needed.
