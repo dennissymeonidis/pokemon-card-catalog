@@ -6,6 +6,18 @@ Versions are git tags. A version is tagged only after it has been tested in the 
 
 
 
+\## v1.3 - 2026-10-28 (split stage 3)
+
+\- src/app.js split into feature files: src/app-cards.js, src/app-decks-shell.js, src/app-cardpage-binders.js, src/app-deckspage-editor.js, src/app-lists-views.js and src/app-showcase-home.js.
+
+\- Load order unchanged.
+
+\- No logic changes.
+
+\- Lossless check passed: the six files joined in order match the old src/app.js byte for byte. Load-time check passed: no load-time statement calls code in a later file.
+
+
+
 \## v1.2 - 2026-10-28 (split stage 2)
 
 \- Scripts moved out of "Card catalog v2.html" to src/runtime.js, src/app.js, src/wishlist.js and src/i18n.js.

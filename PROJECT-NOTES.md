@@ -32,7 +32,7 @@ Tools overhaul (health check, utilities); folder menu moved.
 
 ## 2. Structure
 
-Since the split (stages 1–2, 2026-10-28; see §6) `Card catalog v2.html` is markup only (~37 KB): SheetJS from cdn.sheetjs.com in the head,
+Since the split (stages 1–3, 2026-10-28; see §6) `Card catalog v2.html` is markup only (~37 KB): SheetJS from cdn.sheetjs.com in the head,
 then these files, all classic and sharing one global scope, in load order (sizes in bytes as committed):
 
 | File | Size | Holds |
@@ -41,11 +41,17 @@ then these files, all classic and sharing one global scope, in load order (sizes
 | `src/data/sets.js` | 14,035 | `window.PK_SETS` (built-in set list; `P.sets` starts as it) |
 | `src/data/holder.js` | 14,531 | `window.PK_HOLDER` (`SC_HOLDER`'s data URI) |
 | `src/runtime.js` | 34,782 | Script 1, PKL |
-| `src/app.js` | 678,597 | Script 2, main app |
+| `src/app-cards.js` | 104,546 | Script 2 lines 1–969: storage, helpers, Cards list render, collection value, Stats, Living Pokédex, deck basics |
+| `src/app-decks-shell.js` | 97,562 | Script 2 lines 970–1813: v2 decks (engine, builder, import, wiring), app shell (`buildShell`, `show`), side panels, set symbols, Tools |
+| `src/app-cardpage-binders.js` | 148,385 | Script 2 lines 1814–3151: card page (`cp*`), Binders page (`bk*`, `BKCSS`), plus `DPCSS` |
+| `src/app-deckspage-editor.js` | 110,571 | Script 2 lines 3152–4176: Decks page (`dp*`), `v2Home`, sidebar IIFE, `renderDex`/`renderBinder`/`renderReview`, scanning, editor |
+| `src/app-lists-views.js` | 90,822 | Script 2 lines 4177–5136: editable lists, editor panel, energy types/sets, card sheet, add/export, wiring, columns, formats, views/selection |
+| `src/app-showcase-home.js` | 126,711 | Script 2 lines 5137–6498: undo/backup/import, binder imports, reorder, drag, multi-select, **boot** (`buildShell();render();initStore();`), Showcase, Home, `ptKpis` |
 | `src/wishlist.js` | 50,659 | Script 3, wish list |
 | `src/i18n.js` | 95,920 | Script 4, Greek layer |
 
-Each `src/*.js` is the old inline script body, byte for byte. Line numbers below are pre-split positions in the single file.
+Each `src/*.js` is the old inline script body, byte for byte; the six `src/app-*.js` joined in order are the old script 2 (`src/app.js`), and
+their line ranges above are positions in that file. Line numbers below are pre-split positions in the single HTML file.
 
 Former `<style>` block (lines ~11–1726: tokens `--bg --sheet --ink --muted --line --pocket --pocket-edge --accent --accent-ink --brand --danger --ok --warn`,
 light/dark/auto, all main-DOM styling). The four scripts:
@@ -54,7 +60,7 @@ light/dark/auto, all main-DOM styling). The four scripts:
    Inside it (NOT global): `COLS`, `MAP`, `toRow`, `fromRow`, `workbook`, `load`, `save`, `schedule`, `useDir`, `folderRaw`.
    Exposed on `PKL`: `enrich, findFor, details, priceOf, artwork, cardById, setCards, setRow, tget, updateDetails, rowEnrich, identifyAll, P`.
    Also the TCGdex matchers (`match`, `sim`), `refreshPrices`, `fetchArt`, `updateSets`.
-2. **Main app**, now `src/app.js` (~2582–9079, ~6,500 lines). Section comments mark: storage/helpers/render (Cards list), collection value, Stats (value, analytics),
+2. **Main app**, now the six `src/app-*.js` files (~2582–9079, ~6,500 lines). Section comments mark: storage/helpers/render (Cards list), collection value, Stats (value, analytics),
    decks engine and builder, shell (`SCREENS`, `buildShell`, `show`, `showSub`), Tools (`healthChecks`, `toolsRefresh`), card page (`cp*`),
    Binders page (`bk*`, shadow host `#bkHost`), Decks page (`dk*`, `dp*`, `#dkHost`), Showcase (`sc*`, `scp*`, `#scHost`), Home (`v2Home`, `renderHome`),
    editor (`openEditor`, `ed*`), Living Pokédex (`ldx*`), sidebar IIFE (`sbRefresh`, `sbActive`, `sbUndo`).
@@ -115,3 +121,11 @@ TCGdex: `https://api.tcgdex.net/v2/en` (`/cards/{id}`, `/cards?name=`, `/sets`);
   showcase holder → `src/data/holder.js`. Plus the `pkEnCss` fix (link `energy.css` into shadow panels). Reassembly check: byte-identical to v1.0.
 - **Stage 2 (done, v1.2):** the four inline scripts → `src/runtime.js`, `src/app.js`, `src/wishlist.js`, `src/i18n.js`, same load order,
   text moved only. Check: the four files equal the four original script bodies byte for byte; browser test passed.
+- **Stage 3 (done, v1.3, 2026-10-28; browser test passed):** `src/app.js` → six consecutive files, cut only at top-level section
+  comments: `app-cards.js` (1–969), `app-decks-shell.js` (970–1813), `app-cardpage-binders.js` (1814–3151), `app-deckspage-editor.js` (3152–4176),
+  `app-lists-views.js` (4177–5136), `app-showcase-home.js` (5137–6498). Checks: joined in order they equal `main:src/app.js` byte for byte;
+  no load-time statement calls a function in a later file.
+  **Constraint for future cuts:** the boot (`buildShell();render();initStore();`) must stay in the same file as Showcase and Home and in the
+  last app file. Reasons: `render()` calls `renderShowcase()` unguarded and relies on hoisting; `ptKpis` runs at load when the saved screen is
+  Binders/Decks; `initStore` is async. Load-time list calls (`applyLists(l,true)`, `refreshLists()`) only reach later files through the
+  `render()` path their flags switch off.
